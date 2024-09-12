@@ -1,108 +1,163 @@
 import tkinter as tk
+from tkinter import messagebox
 
-# Global memory variable
-memory = 0
+class Calculator:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Advanced Calculator")
+        self.root.geometry("450x750")
+        self.root.resizable(0, 0)
 
-def button_click(value):
-    current = display.get()
-    display.delete(0, tk.END)
-    display.insert(0, current + value)
+        self.expression = ""
+        self.result = ""
+        self.memory = 0
+        self.last_operator = ""
+        self.last_number = ""
+        self.current_input = ""
 
-def clear_display():
-    display.delete(0, tk.END)
+        self.create_widgets()
 
-def calculate():
-    try:
-        result = str(eval(display.get()))
-        display.delete(0, tk.END)
-        display.insert(0, result)
-    except:
-        display.delete(0, tk.END)
-        display.insert(0, "Error")
+    def create_widgets(self):
+        self.display = tk.Entry(self.root, font=("Arial", 20), bd=10, insertwidth=2, width=14, borderwidth=4, justify='right')
+        self.display.grid(row=0, column=0, columnspan=4)
 
-def add_memory():
-    global memory
-    try:
-        memory += float(display.get())
-    except ValueError:
-        pass
+        buttons = [
+            '7', '8', '9', 'C', '4', '5', '6', '/', 
+            '1', '2', '3', '*', '0', '.', '=', '+', 
+            '-', '(', ')', 'M+', 'M-', 'MR', 'MC', '√', 
+            '^2', '^3', '+/-', '←'
+        ]
+        
+        row = 1
+        col = 0
+        for button in buttons:
+            if col > 3:
+                col = 0
+                row += 1
+            self.create_button(button, row, col)
+            col += 1
 
-def recall_memory():
-    display.insert(tk.END, str(memory))
+    def create_button(self, text, row, col):
+        if text == '=':
+            btn = tk.Button(self.root, text=text, padx=20, pady=20, bd=8, fg="white", bg="green", font=("Arial", 18),
+                            command=self.calculate_result)
+        elif text == 'C':
+            btn = tk.Button(self.root, text=text, padx=20, pady=20, bd=8, fg="white", bg="red", font=("Arial", 18),
+                            command=self.clear)
+        elif text == '←':
+            btn = tk.Button(self.root, text=text, padx=20, pady=20, bd=8, fg="white", bg="blue", font=("Arial", 18),
+                            command=self.backspace)
+        elif text == '+/-':
+            btn = tk.Button(self.root, text=text, padx=20, pady=20, bd=8, fg="white", bg="purple", font=("Arial", 18),
+                            command=self.change_sign)
+        elif text == '^2':
+            btn = tk.Button(self.root, text=text, padx=20, pady=20, bd=8, fg="white", bg="purple", font=("Arial", 18),
+                            command=self.square)
+        elif text == '^3':
+            btn = tk.Button(self.root, text=text, padx=20, pady=20, bd=8, fg="white", bg="purple", font=("Arial", 18),
+                            command=self.cube)
+        elif text == '√':
+            btn = tk.Button(self.root, text=text, padx=20, pady=20, bd=8, fg="white", bg="purple", font=("Arial", 18),
+                            command=self.sqrt)
+        elif text == 'M+':
+            btn = tk.Button(self.root, text=text, padx=20, pady=20, bd=8, fg="white", bg="brown", font=("Arial", 18),
+                            command=self.memory_add)
+        elif text == 'M-':
+            btn = tk.Button(self.root, text=text, padx=20, pady=20, bd=8, fg="white", bg="brown", font=("Arial", 18),
+                            command=self.memory_subtract)
+        elif text == 'MR':
+            btn = tk.Button(self.root, text=text, padx=20, pady=20, bd=8, fg="white", bg="brown", font=("Arial", 18),
+                            command=self.memory_recall)
+        elif text == 'MC':
+            btn = tk.Button(self.root, text=text, padx=20, pady=20, bd=8, fg="white", bg="brown", font=("Arial", 18),
+                            command=self.memory_clear)
+        else:
+            btn = tk.Button(self.root, text=text, padx=20, pady=20, bd=8, font=("Arial", 18), command=lambda: self.on_click(text))
+        btn.grid(row=row, column=col)
 
-def clear_memory():
-    global memory
-    memory = 0
+    def on_click(self, char):
+        if char in "+-*/" and self.expression.endswith(('+', '-', '*', '/')):
+            self.expression = self.expression[:-1] + char
+        else:
+            self.expression += str(char)
+        self.display.delete(0, tk.END)
+        self.display.insert(tk.END, self.expression)
 
-def square():
-    try:
-        result = str(float(display.get()) ** 2)
-        display.delete(0, tk.END)
-        display.insert(0, result)
-    except ValueError:
-        display.delete(0, tk.END)
-        display.insert(0, "Error")
+    def clear(self):
+        self.expression = ""
+        self.display.delete(0, tk.END)
 
-def cube():
-    try:
-        result = str(float(display.get()) ** 3)
-        display.delete(0, tk.END)
-        display.insert(0, result)
-    except ValueError:
-        display.delete(0, tk.END)
-        display.insert(0, "Error")
+    def backspace(self):
+        self.expression = self.expression[:-1]
+        self.display.delete(0, tk.END)
+        self.display.insert(tk.END, self.expression)
 
-def change_sign():
-    try:
-        current = float(display.get())
-        display.delete(0, tk.END)
-        display.insert(0, str(-current))
-    except ValueError:
-        display.delete(0, tk.END)
-        display.insert(0, "Error")
+    def change_sign(self):
+        if self.expression and self.expression[-1].isdigit():
+            self.expression = str(-float(self.expression))
+        self.display.delete(0, tk.END)
+        self.display.insert(tk.END, self.expression)
 
-def backspace():
-    current = display.get()
-    display.delete(0, tk.END)
-    display.insert(0, current[:-1])
+    def calculate_result(self):
+        try:
+            result = str(eval(self.expression))
+            self.display.delete(0, tk.END)
+            self.display.insert(tk.END, result)
+            self.expression = result 
+        except ZeroDivisionError:
+            messagebox.showerror("Error", "Cannot divide by zero")
+            self.expression = ""
+            self.display.delete(0, tk.END)
+        except SyntaxError:
+            messagebox.showerror("Error", "Invalid input")
+            self.expression = ""
+            self.display.delete(0, tk.END)
 
-# Main calculator window
-window = tk.Tk()
-window.title("Calculator")
-window.configure(bg="#20232A")
-window.geometry("550x650")
+    def memory_add(self):
+        try:
+            self.memory += float(self.display.get())
+        except ValueError:
+            messagebox.showerror("Error", "Invalid input in memory add")
 
-# Display entry box
-display = tk.Entry(window, font=("Arial", 20), borderwidth=2, relief="solid", justify="right")
-display.grid(row=0, column=0, columnspan=4, padx=10, pady=10)
+    def memory_subtract(self):
+        try:
+            self.memory -= float(self.display.get())
+        except ValueError:
+            messagebox.showerror("Error", "Invalid input in memory subtract")
 
-# Button styling
-button_font = ("Arial", 14)
-button_bg = "#61DAFB"
-button_fg = "#20232A"
+    def memory_recall(self):
+        self.display.delete(0, tk.END)
+        self.display.insert(tk.END, str(self.memory))
+        self.expression = str(self.memory)
 
-# Calculator buttons
-buttons = [
-    ('7', 1, 0), ('8', 1, 1), ('9', 1, 2), ('/', 1, 3),
-    ('4', 2, 0), ('5', 2, 1), ('6', 2, 2), ('*', 2, 3),
-    ('1', 3, 0), ('2', 3, 1), ('3', 3, 2), ('-', 3, 3),
-    ('.', 4, 0), ('0', 4, 1), ('+', 4, 2), ('=', 4, 3)
-]
+    def memory_clear(self):
+        self.memory = 0
 
-for (text, row, col) in buttons:
-    button = tk.Button(window, text=text, width=10, height=3, font=button_font, bg=button_bg, fg=button_fg,
-                       command=lambda t=text: button_click(t) if t != '=' else calculate())
-    button.grid(row=row, column=col, padx=5, pady=5)
+    def square(self):
+        try:
+            self.expression = str(float(self.expression) ** 2)
+            self.display.delete(0, tk.END)
+            self.display.insert(tk.END, self.expression)
+        except ValueError:
+            messagebox.showerror("Error", "Invalid input for squaring")
 
-# Additional functions buttons
-tk.Button(window, text="C", width=10, height=3, font=button_font, bg="#61DAFB", fg="#20232A", command=clear_display).grid(row=5, column=0, padx=5, pady=5)
-tk.Button(window, text="M+", width=10, height=3, font=button_font, bg="#61DAFB", fg="#20232A", command=add_memory).grid(row=5, column=1, padx=5, pady=5)
-tk.Button(window, text="MR", width=10, height=3, font=button_font, bg="#61DAFB", fg="#20232A", command=recall_memory).grid(row=5, column=2, padx=5, pady=5)
-tk.Button(window, text="MC", width=10, height=3, font=button_font, bg="#61DAFB", fg="#20232A", command=clear_memory).grid(row=5, column=3, padx=5, pady=5)
-tk.Button(window, text="x²", width=10, height=3, font=button_font, bg="#61DAFB", fg="#20232A", command=square).grid(row=6, column=0, padx=5, pady=5)
-tk.Button(window, text="x³", width=10, height=3, font=button_font, bg="#61DAFB", fg="#20232A", command=cube).grid(row=6, column=1, padx=5, pady=5)
-tk.Button(window, text="+/-", width=10, height=3, font=button_font, bg="#61DAFB", fg="#20232A", command=change_sign).grid(row=6, column=2, padx=5, pady=5)
-tk.Button(window, text="←", width=10, height=3, font=button_font, bg="#61DAFB", fg="#20232A", command=backspace).grid(row=6, column=3, padx=5, pady=5)
+    def cube(self):
+        try:
+            self.expression = str(float(self.expression) ** 3)
+            self.display.delete(0, tk.END)
+            self.display.insert(tk.END, self.expression)
+        except ValueError:
+            messagebox.showerror("Error", "Invalid input for cubing")
 
-# Run the main loop
-window.mainloop()
+    def sqrt(self):
+        try:
+            self.expression = str(float(self.expression) ** 0.5)
+            self.display.delete(0, tk.END)
+            self.display.insert(tk.END, self.expression)
+        except ValueError:
+            messagebox.showerror("Error", "Invalid input for square root")
+
+# Main loop
+root = tk.Tk()
+calc = Calculator(root)
+root.mainloop()
