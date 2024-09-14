@@ -1,32 +1,37 @@
 import tkinter as tk
 from tkinter import messagebox
 
+
 class Calculator:
     def __init__(self, root):
         self.root = root
         self.root.title("Advanced Calculator")
-        self.root.geometry("450x750")
+        self.root.geometry("400x600")
         self.root.resizable(0, 0)
 
         self.expression = ""
-        self.result = ""
+        self.result = None
         self.memory = 0
-        self.last_operator = ""
-        self.last_number = ""
-        self.current_input = ""
+        self.reset_expression = False  
 
         self.create_widgets()
 
+        
+        self.root.bind("<Key>", self.keyboard_input)
+
     def create_widgets(self):
+        
         self.display = tk.Entry(self.root, font=("Arial", 20), bd=10, insertwidth=2, width=14, borderwidth=4, justify='right')
         self.display.grid(row=0, column=0, columnspan=4)
 
+        
         buttons = [
             '7', '8', '9', 'C', '4', '5', '6', '/', 
             '1', '2', '3', '*', '0', '.', '=', '+', 
             '-', '(', ')', 'M+', 'M-', 'MR', 'MC', '√', 
             '^2', '^3', '+/-', '←'
         ]
+        
         
         row = 1
         col = 0
@@ -76,15 +81,22 @@ class Calculator:
         btn.grid(row=row, column=col)
 
     def on_click(self, char):
+        if self.reset_expression:
+            self.expression = ""  
+            self.reset_expression = False
+
         if char in "+-*/" and self.expression.endswith(('+', '-', '*', '/')):
             self.expression = self.expression[:-1] + char
         else:
             self.expression += str(char)
+
         self.display.delete(0, tk.END)
         self.display.insert(tk.END, self.expression)
 
     def clear(self):
         self.expression = ""
+        self.result = None
+        self.reset_expression = False
         self.display.delete(0, tk.END)
 
     def backspace(self):
@@ -100,18 +112,19 @@ class Calculator:
 
     def calculate_result(self):
         try:
-            result = str(eval(self.expression))
+            if not self.expression:
+                return
+            self.result = str(eval(self.expression))
             self.display.delete(0, tk.END)
-            self.display.insert(tk.END, result)
-            self.expression = result 
+            self.display.insert(tk.END, self.result)
+            self.expression = self.result  
+            self.reset_expression = True  
         except ZeroDivisionError:
             messagebox.showerror("Error", "Cannot divide by zero")
             self.expression = ""
-            self.display.delete(0, tk.END)
         except SyntaxError:
             messagebox.showerror("Error", "Invalid input")
             self.expression = ""
-            self.display.delete(0, tk.END)
 
     def memory_add(self):
         try:
@@ -157,7 +170,19 @@ class Calculator:
         except ValueError:
             messagebox.showerror("Error", "Invalid input for square root")
 
-# Main loop
+    def keyboard_input(self, event):
+        key = event.char
+
+        if key.isdigit() or key in "+-*/.()":
+            self.on_click(key)
+        elif key == "\r":  
+            self.calculate_result()
+        elif key == "\x08":  
+            self.backspace()
+        elif key.lower() == "c":  
+            self.clear()
+
+
 root = tk.Tk()
 calc = Calculator(root)
 root.mainloop()
