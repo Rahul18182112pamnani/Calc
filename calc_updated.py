@@ -1,87 +1,138 @@
 import tkinter as tk
 
 class Calculator:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Python Calculator")
-        self.root.geometry("450x750")
-        self.root.resizable(False, False)
-
+    def __init__(self, master):
+        self.master = master
+        master.title("Advanced Calculator")
+        master.geometry("450x750")
+        
         self.expression = ""
-        self.result_shown = False
-        self.last_result = None
+        self.result = 0
+        self.current_input = ""
+        self.last_operation = ""
+        self.memory = 0
+        self.memory_history = []
+        self.last_expression = ""
+        self.operator = ""
+        master.bind("<Key>", self.on_keypress)
+        # Display Frame
+        self.display_frame = tk.Frame(self.master)
+        self.display_frame.pack(expand=True, fill="both")
 
-        self.text_input = tk.StringVar()
+        # Expression Label
+        self.expression_var = tk.StringVar()
+        self.expression_label = tk.Label(self.display_frame, textvariable=self.expression_var, font=("Arial", 18), anchor="e", bg="white", fg="grey")
+        self.expression_label.pack(expand=True, fill="both", padx=10, pady=10)
 
-        self.display = tk.Entry(self.root, textvariable=self.text_input, font=('arial', 28, 'bold'), bd=20, insertwidth=4, width=14, borderwidth=4, justify='right', bg="#f5f5f5")
-        self.display.grid(row=0, column=0, columnspan=4, ipadx=8, ipady=20, padx=10, pady=20)
+        # Result Label
+        self.result_var = tk.StringVar()
+        self.result_var.set("0")
+        self.result_label = tk.Label(self.display_frame, textvariable=self.result_var, font=("Arial", 24), anchor="e", bg="white", fg="black")
+        self.result_label.pack(expand=True, fill="both", padx=10, pady=10)
+
+
+        # Button Layout
+        self.buttons_frame = tk.Frame(self.master)
+        self.buttons_frame.pack(expand=True, fill="both")
 
         self.create_buttons()
 
-        self.bind_keys()
-
     def create_buttons(self):
         button_texts = [
-            ('C', 1, 0), ('(', 1, 1), (')', 1, 2), ('Back', 1, 3),
-            ('7', 2, 0), ('8', 2, 1), ('9', 2, 2), ('/', 2, 3),
-            ('4', 3, 0), ('5', 3, 1), ('6', 3, 2), ('*', 3, 3),
-            ('1', 4, 0), ('2', 4, 1), ('3', 4, 2), ('-', 4, 3),
-            ('0', 5, 0), ('.', 5, 1), ('+', 5, 2), ('=', 5, 3)
+            ['MC', 'MR', 'M+', 'M-', 'C'],
+            ['(', ')', '1/x', 'x³', '←'],
+            ['7', '8', '9', '/', 'x²'],
+            ['4', '5', '6', '*', '±'],
+            ['1', '2', '3', '-', '√'],
+            ['0', '.', '=', '+', 'CE']
         ]
 
-        for (text, row, col) in button_texts:
-            self.create_button(text, row, col)
+        for row in button_texts:
+            button_row = tk.Frame(self.buttons_frame)
+            button_row.pack(expand=True, fill="both")
+            for button_text in row:
+                button = tk.Button(button_row, text=button_text, font=("Arial", 18), command=lambda x=button_text: self.on_button_click(x))
+                button.pack(side="left", expand=True, fill="both", padx=5, pady=5)
 
-    def create_button(self, text, row, col):
-        button = tk.Button(self.root, text=text, padx=20, pady=20, font=('arial', 18, 'bold'), bg="#e0e0e0", fg="black", command=lambda: self.on_button_click(text))
-        button.grid(row=row, column=col, sticky="nsew", padx=10, pady=10)
-
-    def on_button_click(self, char):
-        if char == 'C':
-            self.clear()
-        elif char == 'Back':
-            self.backspace()
-        elif char == '=':
-            self.calculate()
-        else:
-            if self.result_shown and char.isdigit():
+    def on_button_click(self, button_text):
+        if self.current_input.startswith("."):
+            self.current_input = "0" + self.current_input
+        if button_text.isdigit() or button_text == ".":
+            self.current_input += button_text
+            self.result_var.set(self.current_input)
+        elif button_text in ['+', '-', '*', '/', 'x²', 'x³', '√', '1/x']:
+            if self.current_input != "":
+                self.expression += self.current_input
+            if button_text == 'x²':
+                self.expression += '**2'
+            elif button_text == 'x³':
+                self.expression += '**3'
+            elif button_text == '√':
+                self.expression += '**0.5'
+            elif button_text == '1/x':
+                self.expression += '**-1'
+            else:
+                self.expression += button_text
+            self.operator = button_text  # Track operator
+            self.last_expression = self.expression
+            self.expression_var.set(self.expression)
+            self.current_input = ""
+        elif button_text == "=":
+            try:
+                if self.current_input != "":
+                    self.expression += self.current_input
+                if self.last_operation:
+                    self.expression = str(self.result) + self.operator + str(self.current_input or self.result)
+                self.result = eval(self.expression)
+                self.result_var.set(str(self.result))
+                self.last_operation = True  # Indicates that an equals operation was made
+                self.expression_var.set(self.expression)
+                self.current_input = str(self.current_input)
                 self.expression = ""
-                self.result_shown = False
-
-            if self.result_shown and not char.isdigit():
-                self.expression = self.last_result
-                self.result_shown = False
-
-            self.expression += str(char)
-            self.text_input.set(self.expression)
-
-    def calculate(self):
-        try:
-            result = str(eval(self.expression))
-            self.text_input.set(result)
-            self.last_result = result
-            self.result_shown = True
-        except:
-            self.text_input.set("Error")
+            except Exception as e:
+                self.result_var.set("Error")
+                self.expression = ""
+                self.current_input = ""
+        elif button_text == "C":
             self.expression = ""
+            self.current_input = ""
+            self.result_var.set("0")
+            self.expression_var.set("")
+        elif button_text == "CE":
+            self.current_input = ""
+            self.result_var.set("0")
+        elif button_text == "←":
+            self.current_input = self.current_input[:-1]
+            self.result_var.set(self.current_input)
+        elif button_text == "±":
+            if self.current_input.startswith('-'):
+                self.current_input = self.current_input[1:]
+            else:
+                self.current_input = '-' + self.current_input
+            self.result_var.set(self.current_input)
+        elif button_text == "MC":
+            self.memory = 0
+            self.memory_history.clear()
+        elif button_text == "MR":
+            self.result_var.set(str(self.memory))
+            self.current_input = str(self.memory)
+        elif button_text == "M+":
+            self.memory += float(self.result_var.get())
+            self.memory_history.append(self.result_var.get())
+        elif button_text == "M-":
+            self.memory -= float(self.result_var.get())
+            self.memory_history.append('-' + self.result_var.get())
+    
+    def on_keypress(self, event):
+        if event.char.isdigit() or event.char in ['+', '-', '*', '/', '.', '=']:
+            self.on_button_click(event.char)
+        elif event.keysym == 'Return':
+            self.on_button_click('=')
+        elif event.keysym == 'BackSpace':
+            current_text = self.result_var.get()
+            self.result_var.set(current_text[:-1])
 
-    def clear(self):
-        self.expression = ""
-        self.text_input.set("")
-        self.result_shown = False
-        self.last_result = None
-
-    def backspace(self):
-        self.expression = self.expression[:-1]
-        self.text_input.set(self.expression)
-
-    def bind_keys(self):
-        self.root.bind("<Return>", lambda event: self.calculate())
-        self.root.bind("<BackSpace>", lambda event: self.backspace())
-        self.root.bind("<Escape>", lambda event: self.clear())
-        for key in '1234567890+-*/().':
-            self.root.bind(key, lambda event, char=key: self.on_button_click(char))
-
-root = tk.Tk()
-app = Calculator(root)
-root.mainloop()
+if __name__ == "__main__":
+    root = tk.Tk()
+    calc = Calculator(root)
+    root.mainloop()
