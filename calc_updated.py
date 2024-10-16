@@ -96,6 +96,7 @@ class Calculator:
         elif button_text == "C":
             self.expression = ""
             self.current_input = ""
+            self.result = 0
             self.result_var.set("0")
             self.expression_var.set("")
         elif button_text == "CE":
