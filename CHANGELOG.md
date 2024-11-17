@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.9.0] - 2024-11-07
+### Fixed
+
+- Resolved issues with continuous calculations: new inputs after an operation now start fresh instead of modifying the previous result.
+- Corrected backspace behavior to ensure it works as expected without corrupting calculations.
+- Addressed edge cases for clear and reset operations: calculations after using the clear button now work correctly.
+- Fixed decimal precision issues to prevent floating-point errors (e.g., 0.1 * 0.2 now correctly outputs 0.02).
+
 ## [1.8.0] - 2024-10-14
 ### Fixed
 - Resolved issues with multiple operations not working correctly after clearing.
