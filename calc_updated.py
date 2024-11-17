@@ -55,10 +55,33 @@ class Calculator:
                 button.pack(side="left", expand=True, fill="both", padx=5, pady=5)
 
     def on_button_click(self, button_text):
+        
+        # Check if last operation was '=' and a digit or '.' is pressed
+        if self.last_operation and (button_text.isdigit() or button_text == "."):
+            # Reset for new calculation
+            self.current_input = button_text  # Start fresh with new input
+            self.result = 0
+            self.expression = ""
+            self.result_var.set(self.current_input)
+            self.expression_var.set("")
+            self.last_operation = False  # Reset the equals flag
+            return
+        # else:
+        #     # Normal input processing
+        #     if button_text.isdigit() or button_text == ".":
+        #         self.current_input += button_text
+        #         self.result_var.set(self.current_input)
+
         if self.current_input.startswith("."):
             self.current_input = "0" + self.current_input
         if button_text.isdigit() or button_text == ".":
-            self.current_input += button_text
+            if button_text == '.' and '.' in self.current_input:
+                return  # Prevent multiple decimals in a single number
+            if self.last_operation:
+                self.current_input = button_text
+                self.last_operation = False
+            else:
+                self.current_input += button_text
             self.result_var.set(self.current_input)
         elif button_text in ['+', '-', '*', '/', 'x²', 'x³', '√', '1/x']:
             if self.current_input != "":
@@ -84,6 +107,8 @@ class Calculator:
                 if self.last_operation:
                     self.expression = str(self.result) + self.operator + str(self.current_input or self.result)
                 self.result = eval(self.expression)
+                self.result = round(self.result, 2)
+                # self.result_var.set(round(result, 10))
                 self.result_var.set(str(self.result))
                 self.last_operation = True  # Indicates that an equals operation was made
                 self.expression_var.set(self.expression)
